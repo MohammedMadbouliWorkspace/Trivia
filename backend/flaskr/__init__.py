@@ -1,6 +1,6 @@
 from flask import Flask, request, json, jsonify, abort
 from flask_cors import CORS
-from ..models import db, migrate, Question, Category
+from models import db, migrate, Question, Category
 
 
 def format_collection(collection):
