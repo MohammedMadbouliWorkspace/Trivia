@@ -1,24 +1,8 @@
-from sqlalchemy import Column, String, Integer
 from flask_sqlalchemy import SQLAlchemy
-
-database_name = "trivia"
-database_path = "postgres://{}/{}".format('localhost:5432', database_name)
+from flask_migrate import Migrate
 
 db = SQLAlchemy()
-
-'''
-setup_db(app)
-    binds a flask application and a SQLAlchemy service
-'''
-
-
-def setup_db(app, database_path=database_path):
-    app.config["SQLALCHEMY_DATABASE_URI"] = database_path
-    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    db.app = app
-    db.init_app(app)
-    db.create_all()
-
+migrate = Migrate(db=db)
 
 '''
 Question
@@ -29,23 +13,39 @@ Question
 class Question(db.Model):
     __tablename__ = 'questions'
 
-    id = Column(Integer, primary_key=True)
-    question = Column(String)
-    answer = Column(String)
-    category = Column(String)
-    difficulty = Column(Integer)
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
 
-    def __init__(self, question, answer, category, difficulty):
+    category_id = db.Column(
+        db.ForeignKey("categories.id"),
+        nullable=False
+    )
+
+    question = db.Column(
+        db.String,
+        nullable=False
+    )
+
+    answer = db.Column(
+        db.String,
+        nullable=False
+    )
+
+    difficulty = db.Column(
+        db.Integer,
+        nullable=False
+    )
+
+    def __init__(self, question, answer, category_id, difficulty):
         self.question = question
         self.answer = answer
-        self.category = category
+        self.category_id = category_id
         self.difficulty = difficulty
 
-    def insert(self):
+    def add(self):
         db.session.add(self)
-        db.session.commit()
-
-    def update(self):
         db.session.commit()
 
     def delete(self):
@@ -57,7 +57,7 @@ class Question(db.Model):
             'id': self.id,
             'question': self.question,
             'answer': self.answer,
-            'category': self.category,
+            'category': self.category.format(),
             'difficulty': self.difficulty
         }
 
@@ -71,8 +71,21 @@ Category
 class Category(db.Model):
     __tablename__ = 'categories'
 
-    id = Column(Integer, primary_key=True)
-    type = Column(String)
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
+
+    type = db.Column(
+        db.String,
+        nullable=False
+    )
+
+    questions = db.relationship(
+        "Question",
+        lazy="dynamic",
+        backref="category"
+    )
 
     def __init__(self, type):
         self.type = type
