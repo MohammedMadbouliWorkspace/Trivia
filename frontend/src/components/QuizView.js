@@ -22,20 +22,18 @@ class QuizView extends Component {
 
     componentDidMount() {
         $.ajax({
-            url: `/categories`, //TODO: update request URL
+            url: `/categories`,
             type: "GET",
             success: (result) => {
                 this.setState({categories: result.categories})
-
             },
             error: (error) => {
                 alert('Unable to load categories. Please try your request again')
-
             }
         })
     }
 
-    selectCategory = ({type, id = 0}) => {
+    selectCategory = ({type, id}) => {
         this.setState({quizCategory: {type, id}}, this.getNextQuestion)
     }
 
@@ -50,13 +48,13 @@ class QuizView extends Component {
         }
 
         $.ajax({
-            url: '/quizzes', //TODO: update request URL
+            url: '/quizzes',
             type: "POST",
             dataType: 'json',
             contentType: 'application/json',
             data: JSON.stringify({
-                previous_questions: previousQuestions,
-                quiz_category: this.state.quizCategory
+                previous_questions_ids: previousQuestions,
+                quiz_category_id: this.state.quizCategory.id
             }),
             xhrFields: {
                 withCredentials: true
@@ -68,13 +66,11 @@ class QuizView extends Component {
                     previousQuestions: previousQuestions,
                     currentQuestion: result.question,
                     guess: '',
-                    forceEnd: result.question ? false : true
+                    forceEnd: !result.question
                 })
-
             },
             error: (error) => {
                 alert('Unable to load question. Please try your request again')
-
             }
         })
     }
@@ -110,11 +106,11 @@ class QuizView extends Component {
                     {Object.keys(this.state.categories).map(id => {
                         return (
                             <div
-                                key={id}
-                                value={id}
+                                key={this.state.categories[id].id}
+                                value={this.state.categories[id].id}
                                 className="play-category"
-                                onClick={() => this.selectCategory({type: this.state.categories[id], id})}>
-                                {this.state.categories[id]}
+                                onClick={() => this.selectCategory({type: this.state.categories[id].type, id:this.state.categories[id].id})}>
+                                {this.state.categories[id].type}
                             </div>
                         )
                     })}
@@ -133,9 +129,13 @@ class QuizView extends Component {
     }
 
     evaluateAnswer = () => {
-        const formatGuess = this.state.guess.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "").toLowerCase()
+        const formatGuess = this.state.guess.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "").toLowerCase().split(' ')
         const answerArray = this.state.currentQuestion.answer.toLowerCase().split(' ');
-        return answerArray.includes(formatGuess)
+        let answer_health = []
+        formatGuess.forEach((e)=>{
+            answer_health.push(answerArray.includes(e))
+        })
+        return answer_health.filter(x => x === true).length >= 1
     }
 
     renderCorrectAnswer() {

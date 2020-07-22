@@ -23,7 +23,7 @@ class QuestionView extends Component {
 
     getQuestions = () => {
         $.ajax({
-            url: `/questions?page=${this.state.page}`, //TODO: update request URL
+            url: `/questions?page=${this.state.page}`,
             type: "GET",
             success: (result) => {
                 this.setState({
@@ -32,18 +32,30 @@ class QuestionView extends Component {
                     categories: result.categories,
                     currentCategory: result.current_category
                 })
-
             },
             error: (error) => {
                 alert('Unable to load questions. Please try your request again')
-
             }
         })
     }
 
-    selectPage(num) {
+    selectPage(num, notUsed) {
         this.setState({page: num}, () => this.getQuestions());
     }
+
+    selectCategoryPage(num, categoryId) {
+        this.setState({page: num}, () => this.getByCategory(categoryId));
+    }
+
+    selectResultsPage(num, notUsed) {
+        this.setState({page: num}, () => this.submitSearch(this.searchTerm));
+    }
+
+    selectPageMethod = this.selectPage
+
+    searchTerm = ""
+
+    fetchQuestionsMethod = this.getQuestions
 
     createPagination() {
         let pageNumbers = [];
@@ -54,16 +66,17 @@ class QuestionView extends Component {
                     key={i}
                     className={`page-num ${i === this.state.page ? 'active' : ''}`}
                     onClick={() => {
-                        this.selectPage(i)
+                        this.selectPageMethod(i, this.state.currentCategory.id)
                     }}>{i}
-        </span>)
+                </span>
+            )
         }
-        return pageNumbers;
+        return pageNumbers.length === 1 ? "" : pageNumbers;
     }
 
     getByCategory = (id) => {
         $.ajax({
-            url: `/categories/${id}/questions`, //TODO: update request URL
+            url: `/categories/${id}/questions?page=${this.state.page}`,
             type: "GET",
             success: (result) => {
                 this.setState({
@@ -71,22 +84,24 @@ class QuestionView extends Component {
                     totalQuestions: result.total_questions,
                     currentCategory: result.current_category
                 })
-
             },
             error: (error) => {
                 alert('Unable to load questions. Please try your request again')
-
             }
         })
     }
 
+    defaultPage = (num) => {
+        this.state.page = num
+    }
+
     submitSearch = (searchTerm) => {
         $.ajax({
-            url: `/questions`, //TODO: update request URL
+            url: `/questions?page=${this.state.page}`,
             type: "POST",
             dataType: 'json',
             contentType: 'application/json',
-            data: JSON.stringify({searchTerm: searchTerm}),
+            data: JSON.stringify({search_term: searchTerm}),
             xhrFields: {
                 withCredentials: true
             },
@@ -97,7 +112,9 @@ class QuestionView extends Component {
                     totalQuestions: result.total_questions,
                     currentCategory: result.current_category
                 })
-
+                this.searchTerm = searchTerm
+                this.selectPageMethod = this.selectResultsPage
+                this.fetchQuestionsMethod = () => this.submitSearch(searchTerm)
             },
             error: (error) => {
                 alert('Unable to load questions. Please try your request again')
@@ -110,14 +127,13 @@ class QuestionView extends Component {
         if (action === 'DELETE') {
             if (window.confirm('are you sure you want to delete the question?')) {
                 $.ajax({
-                    url: `/questions/${id}`, //TODO: update request URL
+                    url: `/questions/${id}`,
                     type: "DELETE",
                     success: (result) => {
-                        this.getQuestions();
+                        this.fetchQuestionsMethod();
                     },
                     error: (error) => {
                         alert('Unable to load questions. Please try your request again')
-
                     }
                 })
             }
@@ -129,19 +145,25 @@ class QuestionView extends Component {
             <div className="question-view">
                 <div className="categories-list">
                     <h2 onClick={() => {
+                        this.state.page = 1
+                        this.selectPageMethod = this.selectPage
+                        this.fetchQuestionsMethod = this.getQuestions
                         this.getQuestions()
                     }}>Categories</h2>
                     <ul>
                         {Object.keys(this.state.categories).map((id,) => (
-                            <li key={id} onClick={() => {
-                                this.getByCategory(id)
+                            <li key={this.state.categories[id].id} onClick={() => {
+                                this.state.page = 1
+                                this.selectPageMethod = this.selectCategoryPage
+                                this.fetchQuestionsMethod = () => this.getByCategory(this.state.categories[id].id)
+                                this.getByCategory(this.state.categories[id].id)
                             }}>
-                                {this.state.categories[id]}
-                                <img className="category" src={`${this.state.categories[id]}.svg`}/>
+                                {this.state.categories[id].type}
+                                <img className="category" src={`${this.state.categories[id].type.toLowerCase()}.svg`}/>
                             </li>
                         ))}
                     </ul>
-                    <Search submitSearch={this.submitSearch}/>
+                    <Search submitSearch={this.submitSearch} defaultPage={this.defaultPage}/>
                 </div>
                 <div className="questions-list">
                     <h2>Questions</h2>
@@ -150,7 +172,7 @@ class QuestionView extends Component {
                             key={q.id}
                             question={q.question}
                             answer={q.answer}
-                            category={this.state.categories[q.category]}
+                            category={q.category.type.toLowerCase()}
                             difficulty={q.difficulty}
                             questionAction={this.questionAction(q.id)}
                         />
