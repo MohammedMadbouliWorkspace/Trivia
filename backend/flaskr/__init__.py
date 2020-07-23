@@ -17,7 +17,7 @@ def create_app(config_file):
     except FileNotFoundError:
         app.config.from_mapping(
             SQLALCHEMY_DATABASE_URI="postgres://trivia@localhost:5432/trivia",
-            SQLALCHEMY_TRACK_MODIFICATIONS=True
+            SQLALCHEMY_TRACK_MODIFICATIONS=True,
         )
 
     app.app_context().push()
@@ -25,12 +25,7 @@ def create_app(config_file):
     db.init_app(app=app)
 
     # Set up CORS and allow '*' for origins
-    cors = CORS(
-        app=app,
-        resources={
-            r"/api/*": {"origins": "*"}
-        }
-    )
+    cors = CORS(app=app, resources={r"/api/*": {"origins": "*"}})
 
     # Concatenate Access-Control-Allow-<property> headers to any response
     @app.after_request
@@ -59,11 +54,7 @@ def create_app(config_file):
         try:
 
             return jsonify(
-                {
-                    "categories": format_collection(
-                        Category.query.all()
-                    )
-                }
+                {"categories": format_collection(Category.query.all())}
             )
 
         except BaseException:
@@ -84,9 +75,7 @@ def create_app(config_file):
 
         try:
             return jsonify(
-                {
-                    "category": Category.query.get(category_id).format()
-                }
+                {"category": Category.query.get(category_id).format()}
             )
 
         except BaseException:
@@ -129,13 +118,14 @@ def create_app(config_file):
             return jsonify(
                 {
                     "questions": format_collection(
-                        category.questions.order_by(Question.id).offset(page).limit(qpp).all()
+                        category.questions.order_by(Question.id)
+                        .offset(page)
+                        .limit(qpp)
+                        .all()
                     ),
                     "total_questions": category.questions.count(),
-                    "categories": format_collection(
-                        Category.query.all()
-                    ),
-                    "current_category": category.format()
+                    "categories": format_collection(Category.query.all()),
+                    "current_category": category.format(),
                 }
             )
 
@@ -208,13 +198,14 @@ def create_app(config_file):
                 return jsonify(
                     {
                         "questions": format_collection(
-                            Question.query.order_by(Question.id).offset(page).limit(qpp).all()
+                            Question.query.order_by(Question.id)
+                            .offset(page)
+                            .limit(qpp)
+                            .all()
                         ),
                         "total_questions": Question.query.count(),
-                        "categories": format_collection(
-                            Category.query.all()
-                        ),
-                        "current_category": ""
+                        "categories": format_collection(Category.query.all()),
+                        "current_category": "",
                     }
                 )
 
@@ -239,7 +230,9 @@ def create_app(config_file):
             if search_term:
 
                 # Fetch results
-                results = Question.query.filter(Question.question.ilike(f"%{search_term}%"))
+                results = Question.query.filter(
+                    Question.question.ilike(f"%{search_term}%")
+                )
 
                 # Format results for a single page
                 results_to_show = results.offset(page).limit(qpp).all()
@@ -248,14 +241,12 @@ def create_app(config_file):
 
                     return jsonify(
                         {
-                            "questions": format_collection(
-                                results_to_show
-                            ),
+                            "questions": format_collection(results_to_show),
                             "total_questions": len(results.all()),
                             "categories": format_collection(
                                 Category.query.all()
                             ),
-                            "current_category": ""
+                            "current_category": "",
                         }
                     )
 
@@ -271,7 +262,7 @@ def create_app(config_file):
                         question=data.get("question"),
                         answer=data.get("answer"),
                         difficulty=data.get("difficulty"),
-                        category_id=data.get("category_id")
+                        category_id=data.get("category_id"),
                     )
 
                     # Commit add Question object
@@ -281,7 +272,9 @@ def create_app(config_file):
                         {
                             "success_status": True,
                             "new_question": question.format(),
-                            "message": "addition operation has been done successfully"
+                            "message": (
+                                "addition operation has been done successfully"
+                            ),
                         }
                     )
 
@@ -320,11 +313,7 @@ def create_app(config_file):
 
             if request.method == "GET":
 
-                return jsonify(
-                    {
-                        "question": question.format()
-                    }
-                )
+                return jsonify({"question": question.format()})
 
             elif request.method == "DELETE":
 
@@ -336,7 +325,9 @@ def create_app(config_file):
                     return jsonify(
                         {
                             "success_status": True,
-                            "message": "deletion operation has been done successfully"
+                            "message": (
+                                "deletion operation has been done successfully"
+                            ),
                         }
                     )
 
@@ -361,7 +352,8 @@ def create_app(config_file):
 
             - By continuing playing with specific category,
             if you reached the last question in this category,
-            it'll make an end-game force by returning a false value within question
+            it'll make an end-game force
+            by returning a false value within question
 
             - Most of the game implementation is dependent on the front end
 
@@ -399,56 +391,64 @@ def create_app(config_file):
             # Set force-end state to False
             force_end = False
 
-            # Check for truth of provided category id to set force-end mechanism
+            # Check for truth of provided category id to set force-end
             if quiz_category_id:
                 # Fetch specific category by its id
                 # to be selected for game
                 selected_category = Category.query.get(quiz_category_id)
 
                 # Set force-end mechanism
-                force_end = selected_category.questions.count() == len(previous_questions_ids)
+                force_end = selected_category.questions.count() == len(
+                    previous_questions_ids
+                )
 
             else:
                 # Set categories list if quiz_category_id not provided
                 categories_to_select = Category.query.all()
 
                 # Get categories of questions in previous_questions_ids
-                categories_in_pqil = [Question.query.get(qid).category for qid in previous_questions_ids]
+                categories_in_pqil = [
+                    Question.query.get(qid).category
+                    for qid in previous_questions_ids
+                ]
 
                 # Count categories in previous_questions_ids list
-                categories_in_pqil_counter = {cat: categories_in_pqil.count(cat) for cat in categories_in_pqil}
+                categories_in_pqil_counter = {
+                    cat: categories_in_pqil.count(cat)
+                    for cat in categories_in_pqil
+                }
 
                 # Remove category from categories_to_select
                 # if its questions num in categories_in_pqil_counter
                 # is equal to its actual questions num
                 for cat in list(set(categories_in_pqil)):
-                    if cat.questions.count() == categories_in_pqil_counter.get(cat):
+                    if cat.questions.count() == categories_in_pqil_counter.get(
+                        cat
+                    ):
                         categories_to_select.remove(cat)
 
                 # Select random category from categories_to_select list
                 selected_category = random.choice(categories_to_select)
 
             # Fetch a random question in the selected category for pre-playing
-            random_question = selected_category.questions.order_by(db.func.random()).first()
+            random_question = selected_category.questions.order_by(
+                db.func.random()
+            ).first()
 
             # Avoid repeating the same question in the provided category
-            while random_question.id in previous_questions_ids and not force_end:
+            while (
+                random_question.id in previous_questions_ids and not force_end
+            ):
                 # Fetch a random question in the selected category
-                random_question = selected_category.questions.order_by(db.func.random()).first()
+                random_question = selected_category.questions.order_by(
+                    db.func.random()
+                ).first()
 
             # Check for force-end state
             if force_end:
-                return jsonify(
-                    {
-                        "question": False
-                    }
-                )
+                return jsonify({"question": False})
 
-            return jsonify(
-                {
-                    "question": random_question.format()
-                }
-            )
+            return jsonify({"question": random_question.format()})
 
         except BaseException:
             abort(422)
@@ -459,32 +459,41 @@ def create_app(config_file):
 
     @app.errorhandler(404)
     def not_found(error):
-        return jsonify(
-            {
-                "success_status": False,
-                "message": "The resource/s cannot be found",
-                "error": 404
-            }
-        ), 404
+        return (
+            jsonify(
+                {
+                    "success_status": False,
+                    "message": "The resource/s cannot be found",
+                    "error": 404,
+                }
+            ),
+            404,
+        )
 
     @app.errorhandler(422)
     def unprocessable(error):
-        return jsonify(
-            {
-                "success_status": False,
-                "message": "This operation cannot be done",
-                "error": 422
-            }
-        ), 422
+        return (
+            jsonify(
+                {
+                    "success_status": False,
+                    "message": "This operation cannot be done",
+                    "error": 422,
+                }
+            ),
+            422,
+        )
 
     @app.errorhandler(405)
     def method_not_allowd(error):
-        return jsonify(
-            {
-                "success_status": False,
-                "message": "This method is not allowed in this endpoint",
-                "error": 405
-            }
-        ), 405
+        return (
+            jsonify(
+                {
+                    "success_status": False,
+                    "message": "This method is not allowed in this endpoint",
+                    "error": 405,
+                }
+            ),
+            405,
+        )
 
     return app
