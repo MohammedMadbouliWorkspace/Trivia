@@ -19,6 +19,8 @@ def create_app(config_file):
             SQLALCHEMY_TRACK_MODIFICATIONS=True
         )
 
+    app.app_context().push()
+
     db.init_app(app=app)
 
     # Set up CORS and allow '*' for origins
