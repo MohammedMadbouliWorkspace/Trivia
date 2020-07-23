@@ -29,12 +29,14 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 404)
         self.assertTrue(not data.get("success_status"))
         self.assertEqual(data.get("message"), "The resource/s cannot be found")
+        self.assertEqual(data.get("error"), 404)
 
     def check_status_422(self, response):
         data = response.get_json()
         self.assertEqual(response.status_code, 422)
         self.assertTrue(not data.get("success_status"))
         self.assertEqual(data.get("message"), "This operation cannot be done")
+        self.assertEqual(data.get("error"), 422)
 
     def evaluate_questions_in_page(self, response, data, total_questions, qpp):
         self.assertEqual(response.status_code, 200)

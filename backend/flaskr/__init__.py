@@ -462,7 +462,8 @@ def create_app(config_file):
         return jsonify(
             {
                 "success_status": False,
-                "message": "The resource/s cannot be found"
+                "message": "The resource/s cannot be found",
+                "error": 404
             }
         ), 404
 
@@ -471,7 +472,8 @@ def create_app(config_file):
         return jsonify(
             {
                 "success_status": False,
-                "message": "This operation cannot be done"
+                "message": "This operation cannot be done",
+                "error": 422
             }
         ), 422
 
@@ -480,7 +482,8 @@ def create_app(config_file):
         return jsonify(
             {
                 "success_status": False,
-                "message": "This method is not allowed in this endpoint"
+                "message": "This method is not allowed in this endpoint",
+                "error": 405
             }
         ), 405
 
