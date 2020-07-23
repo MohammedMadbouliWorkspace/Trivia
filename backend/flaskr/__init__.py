@@ -1,3 +1,4 @@
+import random
 from flask import Flask, request, json, jsonify, abort
 from flask_cors import CORS
 from models import db, Question, Category
@@ -395,33 +396,48 @@ def create_app(config_file):
             # Get category id
             quiz_category_id = data.get("quiz_category_id")
 
-            # Fetch specific category by its id
-            # to be selected for game or select random category
-            selected_category = Category.query.get(quiz_category_id) or Category.query.order_by(
-                db.func.random()
-            ).first()
-
-            # Fetch a random question in the selected category for pre-playing
-            random_question = selected_category.questions.order_by(db.func.random()).first()
-
             # Set force-end state to False
             force_end = False
 
             # Check for truth of provided category id to set force-end mechanism
             if quiz_category_id:
+                # Fetch specific category by its id
+                # to be selected for game
+                selected_category = Category.query.get(quiz_category_id)
 
                 # Set force-end mechanism
                 force_end = selected_category.questions.count() == len(previous_questions_ids)
 
+            else:
+                # Set categories list if quiz_category_id not provided
+                categories_to_select = Category.query.all()
+
+                # Get categories of questions in previous_questions_ids
+                categories_in_pqil = [Question.query.get(qid).category for qid in previous_questions_ids]
+
+                # Count categories in previous_questions_ids list
+                categories_in_pqil_counter = {cat: categories_in_pqil.count(cat) for cat in categories_in_pqil}
+
+                # Remove category from categories_to_select
+                # if its questions num in categories_in_pqil_counter
+                # is equal to its actual questions num
+                for cat in list(set(categories_in_pqil)):
+                    if cat.questions.count() == categories_in_pqil_counter.get(cat):
+                        categories_to_select.remove(cat)
+
+                # Select random category from categories_to_select list
+                selected_category = random.choice(categories_to_select)
+
+            # Fetch a random question in the selected category for pre-playing
+            random_question = selected_category.questions.order_by(db.func.random()).first()
+
             # Avoid repeating the same question in the provided category
             while random_question.id in previous_questions_ids and not force_end:
-
                 # Fetch a random question in the selected category
                 random_question = selected_category.questions.order_by(db.func.random()).first()
 
             # Check for force-end state
             if force_end:
-
                 return jsonify(
                     {
                         "question": False
