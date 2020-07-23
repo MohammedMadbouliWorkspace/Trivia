@@ -1,6 +1,6 @@
 from flask import Flask, request, json, jsonify, abort
 from flask_cors import CORS
-from models import db, migrate, Question, Category
+from models import db, Question, Category
 
 
 def format_collection(collection):
@@ -8,7 +8,6 @@ def format_collection(collection):
 
 
 def create_app(config_file):
-
     # Create and configure the app
     app = Flask(__name__)
     try:
@@ -21,7 +20,6 @@ def create_app(config_file):
         )
 
     db.init_app(app=app)
-    migrate.init_app(app=app)
 
     # Set up CORS and allow '*' for origins
     cors = CORS(
