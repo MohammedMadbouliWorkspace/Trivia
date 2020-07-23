@@ -1,7 +1,6 @@
-export FLASK_APP="flaskr:create_app('development.py')";
-export FLASK_ENV=development;
 export VENV_SOURCE=env;
 source "$VENV_SOURCE/bin/activate";
-flask db init;
-flask db migrate;
-flask db upgrade;
+python manage.py db init;
+python manage.py db migrate;
+python manage.py db upgrade;
+python filldb.py;
