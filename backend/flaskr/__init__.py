@@ -55,13 +55,18 @@ def create_app(config_file):
         :return: JSON view for "categories" [collection]
         """
 
-        return jsonify(
-            {
-                "categories": format_collection(
-                    Category.query.all()
-                )
-            }
-        )
+        try:
+
+            return jsonify(
+                {
+                    "categories": format_collection(
+                        Category.query.all()
+                    )
+                }
+            )
+
+        except BaseException:
+            abort(404)
 
     #  One Category.
     #  ----------------------------------------------------------------
