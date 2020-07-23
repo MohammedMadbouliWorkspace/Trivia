@@ -222,8 +222,14 @@ def create_app(config_file):
 
         elif request.method == "POST":
 
-            # Load json data from response body
-            data = json.loads(request.data)
+            data = None
+
+            if request.data:
+                # Load json data from response body
+                data = json.loads(request.data)
+
+            else:
+                abort(422)
 
             # Get search term
             search_term = data.get("search_term")
@@ -231,13 +237,13 @@ def create_app(config_file):
             # Check if search term is provided
             if search_term:
 
-                try:
+                # Fetch results
+                results = Question.query.filter(Question.question.ilike(f"%{search_term}%"))
 
-                    # Fetch results
-                    results = Question.query.filter(Question.question.ilike(f"%{search_term}%"))
+                # Format results for a single page
+                results_to_show = results.offset(page).limit(qpp).all()
 
-                    # Format results for a single page
-                    results_to_show = results.offset(page).limit(qpp).all()
+                if results_to_show:
 
                     return jsonify(
                         {
@@ -252,10 +258,11 @@ def create_app(config_file):
                         }
                     )
 
-                except BaseException:
+                else:
                     abort(404)
 
             else:
+
                 try:
 
                     # Create a new Question instance
