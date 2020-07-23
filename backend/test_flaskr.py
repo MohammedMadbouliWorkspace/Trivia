@@ -42,7 +42,7 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data.get("total_questions"), total_questions)
         self.assertTrue(data.get("categories"))
 
-    def step_get_all_categories(self):
+    def step_0_get_all_categories(self):
         total_categories = Category.query.count()
 
         response = self.client().get("/categories")
@@ -51,7 +51,7 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(data.get("categories")), total_categories)
 
-    def step_get_category(self):
+    def step_1_get_category(self):
         category = Category.query.order_by(self.db.func.random()).first()
         category_id = category.id
 
@@ -64,7 +64,7 @@ class TriviaTestCase(unittest.TestCase):
         response = self.client().get("/categories/fake-id")
         self.check_status_404(response)
 
-    def step_get_questions_in_category(self):
+    def step_2_get_questions_in_category(self):
         category = Category.query.order_by(self.db.func.random()).first()
         category_id = category.id
         total_questions = category.questions.count()
@@ -88,7 +88,7 @@ class TriviaTestCase(unittest.TestCase):
         response = self.client().get("/categories/fake-id/questions")
         self.check_status_404(response)
 
-    def step_get_all_questions(self):
+    def step_3_get_all_questions(self):
         total_questions = Question.query.count()
         for i in range(1, total_questions + 1):
             questions_per_page = i
@@ -106,7 +106,7 @@ class TriviaTestCase(unittest.TestCase):
                 self.evaluate_questions_in_page(response, data, total_questions, i)
                 self.assertTrue(not data.get("current_category"))
 
-    def step_post_new_question(self):
+    def step_4_post_new_question(self):
         category_id = Category.query.order_by(self.db.func.random()).first().id
 
         question = {
@@ -136,7 +136,7 @@ class TriviaTestCase(unittest.TestCase):
 
         self.check_status_422(response)
 
-    def step_post_search_questions(self):
+    def step_5_post_search_questions(self):
         search = {
             "search_term": "<from_test>"
         }
@@ -170,7 +170,7 @@ class TriviaTestCase(unittest.TestCase):
 
         self.check_status_404(response)
 
-    def step_get_question(self):
+    def step_6_get_question(self):
         question = Question.query.order_by(self.db.func.random()).first()
         question_id = question.id
 
@@ -183,7 +183,7 @@ class TriviaTestCase(unittest.TestCase):
         response = self.client().get("/questions/fake-id")
         self.check_status_404(response)
 
-    def step_delete_question(self):
+    def step_7_delete_question(self):
         try:
             question = Question.query.filter(Question.question == "<from_test>").first()
             question_id = question.id
@@ -202,7 +202,7 @@ class TriviaTestCase(unittest.TestCase):
         response = self.client().get("/questions/fake-id")
         self.check_status_404(response)
 
-    def step_post_play_infinite_state(self):
+    def step_8_post_play_infinite_state(self):
         total_questions = 10
         previous_questions_ids = []
 
@@ -218,7 +218,7 @@ class TriviaTestCase(unittest.TestCase):
             self.assertEqual(response.status_code, 200)
             previous_questions_ids.append(data.get("question").get("id"))
 
-    def step_post_play_force_end_state(self):
+    def step_9_post_play_force_end_state(self):
         category = Category.query.order_by(self.db.func.random()).first()
         total_questions = category.questions.count()
         quiz_category_id = category.id
@@ -257,10 +257,10 @@ class TriviaTestCase(unittest.TestCase):
         for name, step in self._steps():
             try:
                 step()
-                print(f"#{i}\t\t{name.replace('_', ' ')} passed ✔")
+                print(f"#{i}\t\t{name.replace('_', ' ')} <passed> ✔")
 
             except Exception as e:
-                print(f"#{i}\t\t{name.replace('_', ' ')} failed ❌")
+                print(f"#{i}\t\t{name.replace('_', ' ')} <failed> ❌")
                 self.fail(f"{name} failed ({type(e).__name__}: {e})")
 
             finally:
